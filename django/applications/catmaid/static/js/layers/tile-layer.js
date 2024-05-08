@@ -504,19 +504,22 @@
     if (typeof efficiencyThreshold === 'undefined') efficiencyThreshold = 0.0;
     var zoom = s;
     var mag = 1.0;
+    // The minimum zoom level indicates down to what scale level data is
+    // available. Usually this is zoom level zero.
+    var minZoom = this.stack.minZoomLevel;
 
-    /* If the zoom is negative we zoom in digitally. For this
-     * we take the zero zoom level and adjust the tile properties.
-     * This way we let the browser do the zooming work.
+    /* If the zoom is below our minimum zoom level (usually this means negative)
+     * we zoom in digitally. For this we take the zero zoom level and adjust the
+     * tile properties. This way we let the browser do the zooming work.
      */
-    if (zoom < 0 || zoom % 1 !== 0) {
+    if (zoom < minZoom || zoom % 1 !== 0) {
       /* For nonintegral zoom levels the ceiling is used to select
        * source image zoom level. While using the floor would allow
        * better image quality, it would requiring dynamically
        * increasing the number of tiles to fill the viewport since
        * in that case effectiveTileWidth < tileWidth.
        */
-      zoom = Math.min(this.stack.MAX_S, Math.max(0, Math.ceil(zoom)));
+      zoom = Math.min(this.stack.MAX_S, Math.max(minZoom, Math.ceil(zoom)));
       /* Magnification is positive for digital zoom beyond image
        * resolution and negative for non-integral zooms within
        * image resolution.

@@ -82,6 +82,10 @@
     }
     self.MIN_S = max_zoom_level;
     self.downsample_factors = downsample_factors;
+    // A min zoom level can be defined as part of the stack's meta data. It
+    // allow to start artificial zoom at larger zoom levels than zero. This is
+    // useful if e.g. if only downscaled parts of a dataset are available.
+    self.minZoomLevel = metadata ? CATMAID.tools.getDefined(metadata.minZoomLevel, 0) : 0;
 
     self.comment = comment;
     self.description = description;

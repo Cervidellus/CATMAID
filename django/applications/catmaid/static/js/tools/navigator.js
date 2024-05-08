@@ -92,6 +92,7 @@
     this.updateControls = function()
     {
       if (self.stackViewer) {
+        self.slider_s.setSplitValue( self.stackViewer.primaryStack.minZoomLevel, true );
         self.slider_s.setByValue( self.stackViewer.s, true );
         self.slider_z.setByValue( self.stackViewer.z, true );
 

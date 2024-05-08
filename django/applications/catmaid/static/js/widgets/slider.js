@@ -178,6 +178,15 @@
     return this._inputView;
   };
 
+  Slider.prototype.setSplitValue = function (value, exclusive = false) {
+    const indices = this._binValue(value, this._values);
+    let index = indices[indices.length > 1 ? 1 : 0];
+    if (exclusive && this._values.length > index + 1) {
+      index += 1;
+    }
+    this._splitIndex = index;
+  };
+
   /**
    * set a value by its index in the value array
    */

@@ -30,11 +30,12 @@ COPY packagelist-ubuntu-apt.txt /home/
 RUN apt-get update -y  \
     && xargs apt-get install -y < /home/packagelist-ubuntu-apt.txt \
     && rm -rf /var/lib/apt/lists/*
-COPY django/requirements.txt django/requirements-async.txt django/requirements-production.txt /home/django/
+COPY django/requirements.txt django/requirements-async.txt django/requirements-optional.txt django/requirements-production.txt /home/django/
 
 RUN /usr/bin/python3.9 -m venv --upgrade-deps --prompt catmaid /home/env \
     && /home/env/bin/pip install -r /home/django/requirements.txt \
     && /home/env/bin/pip install -r /home/django/requirements-async.txt \
+    && /home/env/bin/pip install -r /home/django/requirements-optional.txt \
     && /home/env/bin/pip install -r /home/django/requirements-production.txt
 
 COPY . /home/

@@ -17,14 +17,19 @@ RUN apt-get update -y \
     && wget --quiet -O - "https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey" | gpg --dearmor | tee /usr/share/keyrings/io.packagecloud.rabbitmq.gpg > /dev/null \
     && echo "deb [signed-by=/usr/share/keyrings/net.launchpad.ppa.rabbitmq.erlang.gpg] http://ppa.launchpad.net/rabbitmq/rabbitmq-erlang/ubuntu focal main" > /etc/apt/sources.list.d/rabbitmq.list \
     && echo "deb [signed-by=/usr/share/keyrings/io.packagecloud.rabbitmq.gpg] https://packagecloud.io/rabbitmq/rabbitmq-server/ubuntu focal main" >> /etc/apt/sources.list.d/rabbitmq.list \
+    && gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-key E298A3A825C0D65DFD57CBB651716619E084DAB9 \
+    && gpg -a --export E298A3A825C0D65DFD57CBB651716619E084DAB9 | apt-key add - \
     && wget --quiet -O - https://postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - > /dev/null \
     && add-apt-repository "deb https://apt.postgresql.org/pub/repos/apt/ focal-pgdg main" \
     && add-apt-repository ppa:deadsnakes/ppa \
     && add-apt-repository -y ppa:nginx/stable \
+    && add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/' \
     && apt-get update -y \
     && apt-get install -y python3.9 python3.9-venv python3.9-dev git python3-pip \
     && apt-get install -y nginx supervisor \
     && apt-get install -y rabbitmq-server \
+    && apt-get install -y r-base r-base-dev mesa-common-dev libglu1-mesa-dev \
+        libssl-dev libssh2-1-dev libcurl4-openssl-dev cmtk \
     && rm -rf /var/lib/apt/lists/*
 COPY packagelist-ubuntu-apt.txt /home/
 RUN apt-get update -y  \

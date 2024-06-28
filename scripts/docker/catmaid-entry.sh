@@ -50,6 +50,14 @@ CM_RUN_ASGI=$(sanitize "${CM_RUN_ASGI:-true}")
 CORS_OPEN=$(sanitize "${CORS_OPEN:-true}")
 TIMEZONE=`readlink /etc/localtime | sed "s/.*\/\(.*\)$/\1/"`
 PG_VERSION='13'
+CLOUD_VOLUME_DIR=$(sanitize "${CLOUD_VOLUME_DIR:-"'/opt/cloud-volume'"}")
+CLOUD_VOLUME_CACHE_DIR=$(sanitize "${CLOUD_VOLUME_CACHE_DIR:-"'/opt/cloud-volume/cache'"}")
+CLOUD_FILES_DIR=$(sanitize "${CLOUD_FILES_DIR:-"'/opt/cloud-volume/cloud-files'"}")
+
+# Ensure these settings are available to sub-processes
+export CLOUD_VOLUME_DIR
+export CLOUD_VOLUME_CACHE_DIR
+export CLOUD_FILES_DIR
 
 # Check if the first argument begins with a dash. If so, prepend "platform" to
 # the list of arguments.
@@ -161,6 +169,14 @@ init_catmaid () {
     echo "Setting FORCE_CLIENT_SETTINGS = False"
     echo "FORCE_CLIENT_SETTINGS = False" >> mysite/settings.py
   fi
+
+  # Make sure cloud-volume folder is present
+  mkdir -p $CLOUD_VOLUME_DIR
+  mkdir -p $CLOUD_VOLUME_CACHE_DIR
+  mkdir -p $CLOUD_FILES_DIR
+  chown www-data $CLOUD_VOLUME_DIR
+  chown www-data $CLOUD_VOLUME_CACHE_DIR
+  chown www-data $CLOUD_FILES_DIR
 
   # Create database and databsae user if not yet present. This should only
   # happen if the database is not run in a separete container.

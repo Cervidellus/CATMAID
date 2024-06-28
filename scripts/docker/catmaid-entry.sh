@@ -190,7 +190,9 @@ init_catmaid () {
     echo "Starting RabbitMQ"
     mkdir -p /var/run/rabbitmq
     chown rabbitmq /var/run/rabbitmq
-    service rabbitmq-server start
+    # Ideally, we'd start RabbitMQ like the following, but this just hangs
+    # without log files being created: service rabbitmq-server start
+    /sbin/runuser -u rabbitmq -- /usr/sbin/rabbitmq-server -detached
     until wget --spider -t1 -T1 -O /dev/null -q 127.0.0.1:5672; do
       sleep 0.1
     done

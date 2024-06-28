@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 LABEL maintainer="Andrew Champion <andrew.champion@gmail.com>, Tom Kazimiers <tom@voodoo-arts.net>"
 
 # For building the image, let dpkg/apt know that we install and configure
@@ -14,18 +14,17 @@ RUN apt-get update -y \
     && apt-get update -y \
     && wget --quiet -O - "https://keys.openpgp.org/vks/v1/by-fingerprint/0A9AF2115F4687BD29803A206B73A36E6026DFCA" | gpg --dearmor | tee /usr/share/keyrings/com.rabbitmq.team.gpg > /dev/null \
     && wget --quiet -O - "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf77f1eda57ebb1cc" | gpg --dearmor | tee /usr/share/keyrings/net.launchpad.ppa.rabbitmq.erlang.gpg > /dev/null \
+    && echo "deb [signed-by=/usr/share/keyrings/net.launchpad.ppa.rabbitmq.erlang.gpg] http://ppa.launchpad.net/rabbitmq/rabbitmq-erlang/ubuntu jammy main" > /etc/apt/sources.list.d/rabbitmq.list \
     && wget --quiet -O - "https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey" | gpg --dearmor | tee /usr/share/keyrings/io.packagecloud.rabbitmq.gpg > /dev/null \
-    && echo "deb [signed-by=/usr/share/keyrings/net.launchpad.ppa.rabbitmq.erlang.gpg] http://ppa.launchpad.net/rabbitmq/rabbitmq-erlang/ubuntu focal main" > /etc/apt/sources.list.d/rabbitmq.list \
-    && echo "deb [signed-by=/usr/share/keyrings/io.packagecloud.rabbitmq.gpg] https://packagecloud.io/rabbitmq/rabbitmq-server/ubuntu focal main" >> /etc/apt/sources.list.d/rabbitmq.list \
-    && gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-key E298A3A825C0D65DFD57CBB651716619E084DAB9 \
-    && gpg -a --export E298A3A825C0D65DFD57CBB651716619E084DAB9 | apt-key add - \
-    && wget --quiet -O - https://postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - > /dev/null \
-    && add-apt-repository "deb https://apt.postgresql.org/pub/repos/apt/ focal-pgdg main" \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && add-apt-repository -y ppa:nginx/stable \
-    && add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/' \
+    && echo "deb [signed-by=/usr/share/keyrings/io.packagecloud.rabbitmq.gpg] https://packagecloud.io/rabbitmq/rabbitmq-server/ubuntu jammy main" >> /etc/apt/sources.list.d/rabbitmq.list \
+    && wget --quiet -O - https://postgresql.org/media/keys/ACCC4CF8.asc > /usr/share/keyrings/apt.postgresql.org.asc \
+    && echo "deb [signed-by=/usr/share/keyrings/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt jammy-pgdg main" >> /etc/apt/sources.list.d/pgdg.list \
+    && wget --quiet -O - "https://nginx.org/keys/nginx_signing.key" | gpg --dearmor | tee /usr/share/keyrings/org.nginx.gpg > /dev/null \
+    && echo "deb [signed-by=/usr/share/keyrings/org.nginx.gpg] http://nginx.org/packages/ubuntu/ jammy nginx" >> /etc/apt/sources.list.d/nginx.list \
+    && wget --quiet -O - "https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc" | gpg --dearmor | tee /usr/share/keyrings/cran.gpg > /dev/null \
+    && echo "deb [signed-by=/usr/share/keyrings/cran.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" >> /etc/apt/sources.list.d/cran.list \
     && apt-get update -y \
-    && apt-get install -y python3.9 python3.9-venv python3.9-dev git python3-pip \
+    && apt-get install -y python3.10 python3.10-venv python3.10-dev git python3-pip \
     && apt-get install -y nginx supervisor \
     && apt-get install -y rabbitmq-server \
     && apt-get install -y r-base r-base-dev mesa-common-dev libglu1-mesa-dev \
@@ -35,9 +34,18 @@ COPY packagelist-ubuntu-apt.txt /home/
 RUN apt-get update -y  \
     && xargs apt-get install -y < /home/packagelist-ubuntu-apt.txt \
     && rm -rf /var/lib/apt/lists/*
+
+# Set the locale
+RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
+    locale-gen
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
 COPY django/requirements.txt django/requirements-async.txt django/requirements-optional.txt django/requirements-production.txt /home/django/
 
-RUN /usr/bin/python3.9 -m venv --upgrade-deps --prompt catmaid /home/env \
+RUN /usr/bin/python3.10 -m venv --upgrade-deps --prompt catmaid /home/env \
+    && /home/env/bin/pip install -U pip \
     && /home/env/bin/pip install -r /home/django/requirements.txt \
     && /home/env/bin/pip install -r /home/django/requirements-async.txt \
     && /home/env/bin/pip install -r /home/django/requirements-optional.txt \

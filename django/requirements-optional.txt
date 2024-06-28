@@ -1,5 +1,5 @@
-rpy2==3.2.6
-pandas==1.1.5
-h5py==3.8.0; platform_python_implementation != "PyPy"
+rpy2==3.5.16
+pandas==2.2.2
+h5py==3.11.0; platform_python_implementation != "PyPy"
 cloud-volume==8.33.0
-molesq==0.3.1
+molesq==0.4.0

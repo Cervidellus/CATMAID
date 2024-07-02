@@ -245,7 +245,7 @@ def compact_skeleton_detail(request:HttpRequest, project_id=None, skeleton_id=No
 
     Each element in the [connectors] array has the following form, with the
     third element representing the connector link as 0 = presynaptic, 1 =
-    postsynaptic, 2 = gap junction, -1 = other:
+    postsynaptic, 2 = gap junction, 3 = mitochondria, -1 = other:
 
     [treenode_id, connector_id, 0|1|2|-1, location_x, location_y, location_z]
 
@@ -405,7 +405,7 @@ def compact_skeleton_detail_many(request:HttpRequest, project_id=None) -> Union[
 
     Each element in the [connectors] array has the following form, with the
     third element representing the connector link as 0 = presynaptic, 1 =
-    postsynaptic, 2 = gap junction, -1 = other:
+    postsynaptic, 2 = gap junction, 3 = desmosome, 4 = mitochondria, -1 = other:
 
     [treenode_id, connector_id, 0|1|2|-1, location_x, location_y, location_z]
 
@@ -530,6 +530,12 @@ def _compact_skeleton(project_id, skeleton_id, with_connectors=True,
 
     with connectors and tags being empty when 0 == with_connectors and 0 ==
     with_tags, respectively.
+
+    Each element in the [connectors] array has the following form, with the
+    third element representing the connector link as 0 = presynaptic, 1 =
+    postsynaptic, 2 = gap junction, 3 = desmosome, 4 = mitochondria, -1 = other:
+
+    [treenode_id, connector_id, 0|1|2|-1, location_x, location_y, location_z]
 
     If history data is requested, each row contains a validity interval. Note
     that for the live table entry (the currently valid version), there are

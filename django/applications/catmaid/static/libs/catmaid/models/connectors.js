@@ -419,6 +419,7 @@
   Connectors.SUBTYPE_TIGHTJUNCTION_CONNECTOR = "tightjunction-connector";
   Connectors.SUBTYPE_DESMOSOME_CONNECTOR = "desmosome-connector";
   Connectors.SUBTYPE_ATTACHMENT_CONNECTOR = "attachment-connector";
+  Connectors.SUBTYPE_MITOCHONDRION_CONNECTOR = "mitochondrion-connector";
 
   Connectors.relationToSubtype = function(relationName) {
     if ('presynaptic_to' === relationName || 'postsynaptic_to' === relationName) {
@@ -435,6 +436,8 @@
       return Connectors.SUBTYPE_TIGHTJUNCTION_CONNECTOR;
     } else if ('desmosome_with' === relationName) {
       return Connectors.SUBTYPE_DESMOSOME_CONNECTOR;
+    } else if ('mitochondrion_of' === relationName) {
+      return Connectors.SUBTYPE_MITOCHONDRION_CONNECTOR;
     } else {
       throw new CATMAID.ValueError('Unknown connector link relation: ' + relationName);
     }

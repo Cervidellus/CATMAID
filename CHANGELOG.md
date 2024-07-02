@@ -34,6 +34,13 @@
 
 ### Features and enhancements
 
+Connector types:
+
+- A new connector has been added to link mitochondria to cells. It can be used
+  through the connector type selection menu with <Alt> + Click.
+
+- The mitochondria connector can currently be used in the Connectivity Widget,
+  the 3D Viewer and the Morphology plot.
 
 Neuron similarity widget:
 

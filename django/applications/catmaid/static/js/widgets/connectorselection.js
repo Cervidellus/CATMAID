@@ -25,6 +25,8 @@
           text = 'Tight junction with';
         } else if ('desmosome_with' === relation) {
           text = 'Desmosome with';
+        } else if ('mitochondrion_of' === relation) {
+          text = 'Mitochondrion of';
         }
         if (text !== undefined) {
           text += ' neuron' + (skids1.length > 1 ? 's' : '') + ' '

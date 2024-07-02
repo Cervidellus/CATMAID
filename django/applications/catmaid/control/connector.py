@@ -426,7 +426,7 @@ def list_connector_links(request:HttpRequest, project_id=None) -> JsonResponse:
     input set of skeletons. These links are further constrained by relation
     type, with currently support available for: postsynaptic_to,
     presynaptic_to, abutting, gapjunction_with, tightjunction_with,
-    desmosome_with.
+    desmosome_with, mitochondrion_of.
 
     Returned is an object containing an array of links to connectors and a set
     of tags for all connectors found (if not disabled). The link array contains

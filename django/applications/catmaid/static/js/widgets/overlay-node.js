@@ -1679,6 +1679,16 @@
                 // careful, atnID is a connector
                 catmaidTracingOverlay.createLink(node.id, atnID, "abutting")
                   .catch(CATMAID.handleError);
+              } else if (atnSubType === CATMAID.Connectors.SUBTYPE_MITOCHONDRION_CONNECTOR) {
+                if (!CATMAID.mayEdit()) {
+                  CATMAID.error("You lack permissions to declare node #" + node.id +
+                      " linked to Mitochondrion connector #" + atnID);
+                  return;
+                }
+                // careful, atnID is a connector
+                SkeletonAnnotations.atn.subtype = CATMAID.Connectors.SUBTYPE_MITOCHONDRION_CONNECTOR;
+                catmaidTracingOverlay.createLink(node.id, atnID, "mitochondrion_of")
+                  .catch(CATMAID.handleError);
               } else if (atnSubType === CATMAID.Connectors.SUBTYPE_ATTACHMENT_CONNECTOR) {
                 if (!CATMAID.mayEdit()) {
                   CATMAID.error("You lack permissions to declare node #" + node.id +
@@ -2008,6 +2018,8 @@
                 linkType = (e.altKey ? 'post' : 'pre') + "synaptic_to";
               } else if (CATMAID.Connectors.SUBTYPE_ABUTTING_CONNECTOR === connectornode.subtype) {
                 linkType = "abutting";
+              } else if (CATMAID.Connectors.SUBTYPE_MITOCHONDRION_CONNECTOR === connectornode.subtype) {
+                linkType = "mitochondrion_of";
               } else {
                 CATMAID.error("The selected connector is of unknown type: " + connectornode.subtype);
                 return;
@@ -2255,6 +2267,8 @@
           stroke_color = settings.attachment_rel_color;
         } else if (relationName === 'close_to') {
           stroke_color = settings.close_to_rel_color;
+        } else if (relationName === 'mitochondrion_of') {
+          stroke_color = settings.mitochondrion_rel_color;
         } else {
           stroke_color = settings.other_rel_color;
         }

@@ -1835,7 +1835,8 @@ def skeleton_info_raw(request:HttpRequest, project_id=None) -> JsonResponse:
         - name: link_types
           description:  |
             A list of allowed link types: incoming, outgoing, abutting,
-            gapjunction, tightjunction, desmosome, attachment, close_object.
+            gapjunction, tightjunction, desmosome, attachment, close_object,
+            mitochondrion
           type: array
           items:
             type: string

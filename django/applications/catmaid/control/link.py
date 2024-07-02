@@ -86,6 +86,15 @@ LINK_TYPES = [
         'cardinality': None,
         'partner_reference': 'close_object',
         'partner_relation': 'close_to',
+    }, {
+        'name': 'Mitochondrion',
+        'type': 'Mitochondrion',
+        'type_id': 'mitochondrion-connector',
+        'relation': 'mitochondrion_of',
+        'isreciprocal': False,
+        'cardinality': None,
+        'partner_reference': 'mitochondrion',
+        'partner_relation': 'mitochondrion_of',
     },
 ]
 
@@ -119,6 +128,10 @@ KNOWN_LINK_PAIRS = {
         'source': 'attached_to',
         'target': 'close_to'
     },
+    'mitochondrion-connector': {
+        'source': 'mitochondrion_of',
+        'target': 'mitochondrion_of',
+    },
 }
 
 
@@ -141,7 +154,7 @@ def create_link(request:HttpRequest, project_id=None) -> JsonResponse:
 
     Currently the following link types (relations) are supported:
     presynaptic_to, postsynaptic_to, abutting, gapjunction_with,
-    tightjunction_with, desmosome_with.
+    tightjunction_with, desmosome_with, mitochondrion_of.
     """
     from_id = int(request.POST.get('from_id', 0))
     to_id = int(request.POST.get('to_id', 0))

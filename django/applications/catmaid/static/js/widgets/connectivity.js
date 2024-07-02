@@ -601,6 +601,8 @@
         pTitle: 'Abutting partners', ctrShort: 'abt'},
     'close_object': {name: 'Close object', rel: 'close_to',
         pTitle: 'Close object', ctrShort: 'cls'},
+    'mitochondrion': {name: 'Mitochondrion', rel: 'mitochondrion_of',
+        pTitle: 'Mitochondria of neurons', ctrShort: 'mc'},
   };
 
   SkeletonConnectivity.prototype.update = function() {

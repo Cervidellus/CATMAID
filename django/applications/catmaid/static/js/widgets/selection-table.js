@@ -23,7 +23,7 @@
     this.review_filter = 'Union'; // filter for review percentage: 'Union', 'Team' or 'Self'
     this.min_review_percent = 0;
     this.all_visible = true;
-    this.all_items_visible = {pre: true, post: true, desmosome: true, text: false, meta: true};
+    this.all_items_visible = {pre: true, post: true, desmosome: true, mitochondria: true, text: false, meta: true};
     this.next_color_index = 0;
     this.batchColor = '#ffff00';
     this.batchOpacity = 1.0;
@@ -47,8 +47,8 @@
   };
 
   // Skeleton properties that are referenced at various locations.
-  SelectionTable.KnownVisibilities = ['pre', 'post', 'desmosome', 'text', 'meta'];
-  SelectionTable.KnownVisibilityFields = ['pre_visible', 'post_visible', 'desmosome_visible', 'text_visible', 'meta_visible'];
+  SelectionTable.KnownVisibilities = ['pre', 'post', 'desmosome', 'mitochondrion', 'text', 'meta'];
+  SelectionTable.KnownVisibilityFields = ['pre_visible', 'post_visible', 'desmosome_visible', 'mitochondrion_visible', 'text_visible', 'meta_visible'];
 
   SelectionTable._lastFocused = null; // Static reference to last focused instance
 
@@ -207,7 +207,7 @@
           self.linkVisibilities = this.checked;
         };
         var linkVizSettigs = document.createElement('label');
-        linkVizSettigs.setAttribute('title', 'If unchecked, pre/post/desmosome/' +
+        linkVizSettigs.setAttribute('title', 'If unchecked, pre/post/desmosome/mitochondria/' +
             'text/meta visibility can also be controlled for all skeletons regardless' +
             ' of their visibility.');
         linkVizSettigs.appendChild(linkVizSettigsCb);
@@ -232,6 +232,7 @@
                 '<th title="Control visibility of pre-synaptic connections (3D viewer)">pre</th>' +
                 '<th title="Control visibility of post-synaptic connections (3D viewer)">post</th>' +
                 '<th title="Control visibility of desmosome connections (3D viewer)">desmo</th>' +
+                '<th title="Control visibility of mitochondria connections (3D viewer)">mito</th>' +
                 '<th title="Control visibility of tags (3D viewer)">text</th>' +
                 '<th title="Control visibility of special nodes (3D viewer)">meta</th>' +
                 '<th title="Control the color of a neuron (3D viewer)">color</th>' +
@@ -253,6 +254,7 @@
                 '<th><input type="checkbox" id="selection-table-show-all-pre' + this.widgetID + '" checked style="float: left" /></th>' +
                 '<th><input type="checkbox" id="selection-table-show-all-post' + this.widgetID + '" checked style="float: left" /></th>' +
                 '<th><input type="checkbox" id="selection-table-show-all-desmosome' + this.widgetID + '" checked style="float: left" /></th>' +
+                '<th><input type="checkbox" id="selection-table-show-all-mitochondrion' + this.widgetID + '" checked style="float: left" /></th>' +
                 '<th><input type="checkbox" id="selection-table-show-all-text' + this.widgetID + '" style="float: left" /></th>' +
                 '<th><input type="checkbox" id="selection-table-show-all-meta' + this.widgetID + '" checked style="float: left" /></th>' +
                 '<th><button id="selection-table-batch-color-button' + this.widgetID +
@@ -362,7 +364,8 @@
 
             // The first checkbox controls all others
             if ("selected" === action) {
-              ['pre_visible', 'post_visible', 'desmosome_visibe', 'text_visible', 'meta_visible'].forEach(function(other, k) {
+              ['pre_visible', 'post_visible', 'desmosome_visibe', 'mitochondrion_of',
+                  'text_visible', 'meta_visible'].forEach(function(other, k) {
                 if (visible && 2 === k) return; // don't make text visible
                 skeleton[other] = visible;
                 $('#skeleton' + other + table.widgetID + '-' + skeletonID).prop('checked', visible);
@@ -628,7 +631,7 @@
     this.updateTableInfo();
   };
 
-  /** Where 'type' is 'pre' or 'post' or 'desmosome' or 'text' or 'meta', which are
+  /** Where 'type' is 'pre' or 'post' or 'desmosome', 'mitochondrion', or 'text' or 'meta', which are
    * the prefixes of the keys in SkeletonModel that end with "_visible". */
   SelectionTable.prototype.toggleAllKeyUI = function(type) {
     var state = !this.all_items_visible[type];
@@ -805,6 +808,7 @@
             model.meta_visible = this.all_items_visible['meta'];
             model.text_visible = this.all_items_visible['text'];
             model.desmosome_visible = this.all_items_visible['desmosome'];
+            model.mitochondrion_visible = this.all_items_visible['mitochondrion'];
             model.pre_visible = this.all_items_visible['pre'];
             model.post_visible = this.all_items_visible['post'];
 
@@ -1374,6 +1378,13 @@
           "visible": this.showVisibilityControls,
           "render": function(data, type, row, meta) {
             return createCheckbox('desmosome_visible', row.skeleton);
+          }
+        },
+        {
+          "orderable": false,
+          "visible": this.showVisibilityControls,
+          "render": function(data, type, row, meta) {
+            return createCheckbox('mitochondrion_visible', row.skeleton);
           }
         },
         {

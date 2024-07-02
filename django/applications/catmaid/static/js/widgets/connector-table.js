@@ -94,6 +94,7 @@
           {title: 'Desmosome connectors', value: "desmosome_with"},
           {title: 'Abutting connectors', value: "abutting"},
           {title: 'Attachment connectors', value: "attached_to"}],
+          {title: 'Mitochondrion connectors', value: "mitochondrion_of"},
           "presynaptic_to");
         relation.onchange = this.update.bind(this);
         var relationLabel = document.createElement('label');

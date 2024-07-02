@@ -663,7 +663,8 @@ def _compact_skeleton(project_id, skeleton_id, with_connectors=True,
         post = relations['postsynaptic_to']
         gj = relations.get('gapjunction_with', -1)
         dm = relations.get('desmosome_with', -3)
-        relation_index = {pre: 0, post: 1, gj: 2, dm: 3}
+        mc = relations.get('mitochondrion_of', -4)
+        relation_index = {pre: 0, post: 1, gj: 2, dm: 3, mc: 4}
         if not with_history:
             user_select = ', tc.user_id' if with_user_info else ''
             cursor.execute('''
@@ -674,7 +675,7 @@ def _compact_skeleton(project_id, skeleton_id, with_connectors=True,
                     connector c
                 WHERE tc.skeleton_id = %(skeleton_id)s
                 AND tc.connector_id = c.id
-                AND tc.relation_id IN (%(pre_id)s, %(post_id)s, %(gj_id)s, %(dm_id)s)
+                AND tc.relation_id IN (%(pre_id)s, %(post_id)s, %(gj_id)s, %(dm_id)s, %(mc_id)s)
             '''.format(**{
                 'user_select': user_select,
                 'scale': '*%(scale)s' if scale else '',
@@ -684,6 +685,7 @@ def _compact_skeleton(project_id, skeleton_id, with_connectors=True,
                 'post_id': post,
                 'gj_id': gj,
                 'dm_id': dm,
+                'mc_id': mc,
                 'scale': scale,
             })
 
@@ -698,6 +700,7 @@ def _compact_skeleton(project_id, skeleton_id, with_connectors=True,
                 'post': post,
                 'gj': gj,
                 'dm': dm,
+                'mc': mc,
                 'scale': scale,
             }
             user_select = ', links.user_id' if with_user_info else ''
@@ -729,7 +732,7 @@ def _compact_skeleton(project_id, skeleton_id, with_connectors=True,
                 ) links(treenode_id, connector_id, relation_id, valid_from, valid_to, user_id)
                 JOIN connector__with_history c
                     ON links.connector_id = c.id
-                WHERE links.relation_id IN (%(pre)s, %(post)s, %(gj)s, %(dm)s)
+                WHERE links.relation_id IN (%(pre)s, %(post)s, %(gj)s, %(dm)s, %(mc)s)
             '''
 
             if with_merge_history:

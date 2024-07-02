@@ -43,6 +43,7 @@ needed_relations = {
     'mirror_of': { 'description': "A mirror configuration to each other", 'isreciprocal': True },
     'annotated_with': "Something is annotated with sth. else.",
     'part_of': "Something is a part of sth. else.",
+    'mitochondrion_of': "A mitochondrion linked to another objects",
 }
 
 # Expected sampler states, sampler interval sates and sampler domain types

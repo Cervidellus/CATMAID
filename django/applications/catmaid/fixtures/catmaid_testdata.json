@@ -1369,6 +1369,20 @@
     }
   },
   {
+    "pk": 102464,
+    "model": "catmaid.relation",
+    "fields": {
+      "description": null,
+      "isreciprocal": false,
+      "creation_time": "2011-10-30T04:33:34.263Z",
+      "uri": null,
+      "edition_time": "2011-10-30T04:33:34.263Z",
+      "project": 3,
+      "relation_name": "mitochondrion_of",
+      "user": 3
+    }
+  },
+  {
     "pk": 10524,
     "model": "catmaid.relation",
     "fields": {

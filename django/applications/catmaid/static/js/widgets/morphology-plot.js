@@ -86,7 +86,8 @@
              'Radial density of input synapses',
              'Radial density of output synapses',
              'Radial density of gap junctions',
-             'Radial density of desmosomes']);
+             'Radial density of desmosomes',
+             'Radial density of mitochondria']);
 
         controls.appendChild(document.createTextNode(' Radius (nm): '));
         var radius = document.createElement('input');
@@ -267,7 +268,8 @@
           this.lines[skeleton_id] = {nodes: json[0],
                                      connectors: json[1].filter(function(con) {
                                        // Keep only known connector types
-                                       return con[2] === 0 || con[2] === 1 || con[2] === 2 || con[2] === 3;
+                                       return con[2] === 0 || con[2] === 1 || con[2] === 2 || con[2] === 3 ||
+                                          con[2] === 4;
                                      }),
                                      tags: json[2]};
         }).bind(this),
@@ -367,6 +369,11 @@
       } else if (endsWith(this.mode, 'desmosomes')) {
         ps = line.connectors.reduce(function(o, row) {
           if (3 === row[2]) o[row[0]] = positions[row[0]];
+          return o;
+        }, {});
+      } else if (endsWith(this.mode, 'mitochondria')) {
+        ps = line.connectors.reduce(function(o, row) {
+          if (4 === row[2]) o[row[0]] = positions[row[0]];
           return o;
         }, {});
       }

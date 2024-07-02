@@ -1704,6 +1704,7 @@
   WebGLApplication.prototype.setSkeletonPreVisibility = WebGLApplication.prototype._skeletonVizFn('Pre');
   WebGLApplication.prototype.setSkeletonPostVisibility = WebGLApplication.prototype._skeletonVizFn('Post');
   WebGLApplication.prototype.setSkeletonDesmosomeVisibility = WebGLApplication.prototype._skeletonVizFn('Desmosome');
+  WebGLApplication.prototype.setSkeletonMitochondrionVisibility = WebGLApplication.prototype._skeletonVizFn('Mitochondrion');
   WebGLApplication.prototype.setSkeletonTextVisibility = WebGLApplication.prototype._skeletonVizFn('Text');
   WebGLApplication.prototype.setSkeletonMetaVisibility = WebGLApplication.prototype._skeletonVizFn('Meta');
 
@@ -1960,6 +1961,7 @@
         skeleton.setPreVisibility(false, true);
         skeleton.setPostVisibility(false, true);
         skeleton.setDesmosomeVisibility(false, true);
+        skeleton.setMitochondrionVisibility(false, true);
       });
 
       var restriction = this.options.connector_filter;
@@ -2029,6 +2031,7 @@
         skeleton.setPreVisibility(skeleton.skeletonmodel.pre_visible);
         skeleton.setPostVisibility(skeleton.skeletonmodel.post_visible);
         skeleton.setDesmosomeVisibility(skeleton.skeletonmodel.desmosome_visible);
+        skeleton.setMitochondrionVisibility(skeleton.skeletonmodel.mitochondrion_visible);
       });
     }
 
@@ -2293,6 +2296,7 @@
           skeleton.setPreVisibility(model.pre_visible);
           skeleton.setPostVisibility(model.post_visible);
           skeleton.setDesmosomeVisibility(model.desmosome_visible);
+          skeleton.setMitochondrionVisibility(model.mitochondrion_visible);
           skeleton.setTextVisibility(model.text_visible);
           skeleton.setMetaVisibility(model.meta_visible);
           skeleton.actorColor = model.color.clone();
@@ -3708,7 +3712,9 @@
         pre: s.skeletonmodel.pre_visible,
         post: s.skeletonmodel.post_visible,
         text: s.skeletonmodel.text_visible,
-        meta: s.skeletonmodel.meta_visible
+        meta: s.skeletonmodel.meta_visible,
+        desmosome: s.skeletonmodel.desmosome_visible,
+        mitochondrion: s.skeletonmodel.mitochondrion_visible,
       };
     }
 
@@ -3730,6 +3736,7 @@
       s.setPreVisibility(visMap[skid].pre ? visible : false);
       s.setPostVisibility(visMap[skid].post ? visible : false);
       s.setDesmosomeVisibility(visMap[skid].desmosome ? visible : false);
+      s.setMitochondrionVisibility(visMap[skid].Mitochondrion ? visible : false);
       s.setTextVisibility(visMap[skid].text ? visible : false);
       s.setMetaVisibility(visMap[skid].meta ? visible : false);
     }
@@ -3852,7 +3859,9 @@
                                 'postsynaptic_to': new THREE.LineBasicMaterial({color: 0x00f6ff, opacity: 1.0, linewidth: 6}),
                                 'gapjunction_with': new THREE.LineBasicMaterial({color: 0x9f25c2, opacity: 1.0, linewidth: 6}),
                                 'desmosome_with': new THREE.LineBasicMaterial({
-                                    color: CATMAID.TracingOverlay.Settings.session.desmosome_rel_color, opacity: 1.0, linewidth: 6})};
+                                    color: CATMAID.TracingOverlay.Settings.session.desmosome_rel_color, opacity: 1.0, linewidth: 6}),
+                                'mitochondrion_of': new THREE.LineBasicMaterial({
+                                    color: CATMAID.TracingOverlay.Settings.session.mitochondrion_rel_color, opacity: 1.0, linewidth: 6})};
   };
 
   WebGLApplication.prototype.Space.prototype.StaticContent.prototype = {};
@@ -6023,6 +6032,8 @@
       this.staticContent.connectorLineColors.postsynaptic_to.visible;
     var originalConnectorDesmosomeVisibility =
       this.staticContent.connectorLineColors.desmosome_with.visible;
+    var originalConnectorMitochondrionVisibility =
+      this.staticContent.connectorLineColors.mitochondrion_of.visible;
 
     // Hide everthing unpickable
     var o = CATMAID.tools.deepCopy(this.options);
@@ -6037,6 +6048,7 @@
     this.staticContent.connectorLineColors.presynaptic_to.visible = false;
     this.staticContent.connectorLineColors.postsynaptic_to.visible = false;
     this.staticContent.connectorLineColors.desmosome_with.visible = false;
+    this.staticContent.connectorLineColors.mitochondrion_of.visible = false;
 
     // Disable lighting and add plain ambient light
     var lightVisMap = this.lights.map(function(l) {
@@ -6333,6 +6345,8 @@
       originalConnectorPostVisibility;
     this.staticContent.connectorLineColors.desmosome_with.visible =
       originalConnectorDesmosomeVisibility;
+    this.staticContent.connectorLineColors.mitochondrion_of.visible =
+      originalConnectorMitochondrionVisibility;
 
     // If no color ID was found, no element was hit.
     if (colorId === 0) {
@@ -6596,17 +6610,21 @@
   WebGLApplication.prototype.Space.prototype.Skeleton.prototype = {};
 
   // Find better way to define connector types
-  WebGLApplication.prototype.Space.prototype.Skeleton.prototype.CTYPES = ['neurite', 'presynaptic_to', 'postsynaptic_to', 'gapjunction_with', 'desmosome_with'];
-  WebGLApplication.prototype.Space.prototype.Skeleton.prototype.synapticTypes = ['presynaptic_to', 'postsynaptic_to', 'gapjunction_with', 'desmosome_with'];
+  WebGLApplication.prototype.Space.prototype.Skeleton.prototype.CTYPES = ['neurite', 'presynaptic_to',
+      'postsynaptic_to', 'gapjunction_with', 'desmosome_with', 'mitochondrion_of'];
+  WebGLApplication.prototype.Space.prototype.Skeleton.prototype.synapticTypes =
+      ['presynaptic_to', 'postsynaptic_to', 'gapjunction_with', 'desmosome_with', 'mitochondrion_of'];
   WebGLApplication.prototype.Space.prototype.Skeleton.prototype.synapticTypesToModelVisibility = {
     'presynaptic_to': 'pre_visible',
     'postsynaptic_to': 'post_visible',
-    'desmosome_with': 'desmosome_visible'
+    'desmosome_with': 'desmosome_visible',
+    'mitochondrion_of': 'mitochondrion_of',
   };
   WebGLApplication.prototype.Space.prototype.Skeleton.prototype.modelVisibilityToSynapticType = {
     'presynaptic_to': 'pre_visible',
     'postsynaptic_to': 'post_visible',
-    'desmosome_with': 'desmosome_visible'
+    'desmosome_with': 'desmosome_visible',
+    'mitochondrion_of': 'mitochondrion_of',
   };
 
 
@@ -6650,6 +6668,7 @@
     this.geometry[CTYPES[2]] = new THREE.Geometry();
     this.geometry[CTYPES[3]] = new THREE.Geometry();
     this.geometry[CTYPES[4]] = new THREE.Geometry();
+    this.geometry[CTYPES[5]] = new THREE.Geometry();
 
     var MeshType = options.triangulated_lines ?
           THREE.LineSegments2 : THREE.LineSegments;
@@ -6660,6 +6679,7 @@
     this.actor[CTYPES[2]] = new THREE.LineSegments(this.geometry[CTYPES[2]], this.space.staticContent.connectorLineColors[CTYPES[2]]);
     this.actor[CTYPES[3]] = new THREE.LineSegments(this.geometry[CTYPES[3]], this.space.staticContent.connectorLineColors[CTYPES[3]]);
     this.actor[CTYPES[4]] = new THREE.LineSegments(this.geometry[CTYPES[4]], this.space.staticContent.connectorLineColors[CTYPES[4]]);
+    this.actor[CTYPES[5]] = new THREE.LineSegments(this.geometry[CTYPES[5]], this.space.staticContent.connectorLineColors[CTYPES[5]]);
 
     this.specialTagSpheres = {};
     this.synapticSpheres = {};
@@ -6753,6 +6773,7 @@
     this.actor[this.CTYPES[2]].geometry.dispose();
     this.actor[this.CTYPES[3]].geometry.dispose();
     this.actor[this.CTYPES[4]].geometry.dispose();
+    this.actor[this.CTYPES[5]].geometry.dispose();
 
     var meshes = collection || [];
     [this.actor, this.radiusVolumes].forEach(function(ob) {
@@ -6866,6 +6887,9 @@
   WebGLApplication.prototype.Space.prototype.Skeleton.prototype.setPostVisibility = WebGLApplication.prototype.Space.prototype.Skeleton.prototype.setSynapticVisibilityFn('postsynaptic_to');
 
   WebGLApplication.prototype.Space.prototype.Skeleton.prototype.setDesmosomeVisibility = WebGLApplication.prototype.Space.prototype.Skeleton.prototype.setSynapticVisibilityFn('desmosome_with');
+
+  WebGLApplication.prototype.Space.prototype.Skeleton.prototype.setMitochondrionVisibility =
+      WebGLApplication.prototype.Space.prototype.Skeleton.prototype.setSynapticVisibilityFn('desmosome_with');
 
   WebGLApplication.prototype.Space.prototype.Skeleton.prototype.setMetaVisibility = function(vis) {
     for (var idx in this.specialTagSpheres) {
@@ -7886,6 +7910,7 @@
     this.connectorgeometry[this.CTYPES[2]] = new THREE.Geometry();
     this.connectorgeometry[this.CTYPES[3]] = new THREE.Geometry();
     this.connectorgeometry[this.CTYPES[4]] = new THREE.Geometry();
+    this.connectorgeometry[this.CTYPES[5]] = new THREE.Geometry();
 
     var scaling = this.space.options.link_node_scaling;
     var materialType = this.space.options.neuron_material;
@@ -8532,7 +8557,8 @@
     connectors.forEach(function(con) {
       // con[0]: treenode ID
       // con[1]: connector ID
-      // con[2]: 0 for pre, 1 for post, 2 for gap junction, -1 for other to be skipped
+      // con[2]: 0 for pre, 1 for post, 2 for gap junction, 3 for mitochondrion,
+      //        -1 for other to be skipped
       // indices 3,4,5 are x,y,z for connector
       // indices 4,5,6 are x,y,z for node
       var type = con[2];

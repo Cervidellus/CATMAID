@@ -102,6 +102,17 @@ class ConnectorsApiTests(CatmaidApiTestCase):
                 'partner_relation': 'close_to',
                 'cardinality': None,
                 'isreciprocal': True,
+            },
+            {
+                'name': 'Mitochondrion',
+                'relation': 'mitochondrion_of',
+                'relation_id': 102464,
+                'type': 'Mitochondrion',
+                'type_id': 'mitochondrion-connector',
+                'partner_reference': 'mitochondrion',
+                'partner_relation': 'mitochondrion_of',
+                'cardinality': 2,
+                'isreciprocal': True,
             }]
 
         self.assertListEqual(expected_result, parsed_response)

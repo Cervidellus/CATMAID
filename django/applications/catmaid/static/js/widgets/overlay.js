@@ -1212,6 +1212,9 @@ var SkeletonAnnotations = {};
             other_rel_color: {
               default: 0x00C800
             },
+            mitochondrion_rel_color: {
+              default: 0x9641C1
+            },
             connector_node_marker: {
               // enum of 'disc', 'crosshair', 'target', 'bullseye', 'ring'
               default: 'disc'
@@ -2665,6 +2668,36 @@ var SkeletonAnnotations = {};
   };
 
   /**
+   * Create a new treenode that has a mitochondrion with the given @connectorID.
+   */
+  CATMAID.TracingOverlay.prototype.createMitochondrionTreenode = function (
+      connectorID, phys_x, phys_y, phys_z, radius, confidence, afterCreate)
+  {
+    // Check that connectorID doesn't already have a mitochondrion link.
+    // (It is also checked in the server on attempting to create a link.
+    // Here, it is checked for convenience to avoid creating an isolated treenode for no reason.)
+    var connectorNode = this.nodes.get(connectorID);
+    if (!connectorNode) {
+      return Promise.reject(new CATMAID.ValueError( "Connector #" +
+          connectorID + " is not loaded. Browse to " +
+          "its section and make sure it is selected."));
+    }
+    var counts = connectorNode.links.reduce(countRelationNames, {});
+
+    if (CATMAID.tools.getDefined(counts['mitochondrion_of'], 0) > 1) {
+      return Promise.reject(new CATMAID.Warning(
+          "The mitochondrion connector already has two nodes!"));
+    }
+    if (CATMAID.tools.getDefined(counts['presynaptic_to'], 0) > 0 ||
+        CATMAID.tools.getDefined(counts['postsynaptic_to'], 0) > 0) {
+      return Promise.reject(new CATMAID.Warning(
+          "Mitochondrion can not be added as the connector is part of a synapse!"));
+    }
+    return this.createTreenodeWithLink(connectorID, phys_x, phys_y, phys_z, radius,
+        confidence, "mitochondrion_of", afterCreate);
+  };
+
+  /**
    * Create a new treenode and link it immediately to the given connector with the
    * specified link_type.
    */
@@ -3123,6 +3156,8 @@ var SkeletonAnnotations = {};
           subtype = CATMAID.Connectors.SUBTYPE_DESMOSOME_CONNECTOR;
         } else if (relation_name == 'attached_to') {
           subtype = CATMAID.Connectors.SUBTYPE_ATTACHMENT_CONNECTOR;
+        } else if (relation_name == 'mitochondrion_of') {
+          subtype = CATMAID.Connectors.SUBTYPE_MITOCHONDRION_CONNECTOR;
         }
       }
       // a[0]: ID, a[1]: x, a[2]: y, a[3]: z, a[4]: confidence,
@@ -3743,6 +3778,9 @@ var SkeletonAnnotations = {};
           } else if (CATMAID.Connectors.SUBTYPE_ATTACHMENT_CONNECTOR == newConnectorType) {
             create = createConnector("attached_to", newConnectorType,
                 `Created attachment connector for treenode ${atn.id}`);
+          } else if (CATMAID.Connectors.SUBTYPE_MITOCHONDRION_CONNECTOR === newConnectorType) {
+            create = createConnector("mitochondrion_of", newConnectorType,
+                "Created mitochondrion connector with treenode #" + atn.id);
           } else {
             CATMAID.warn("Unknown connector type selected");
             return Promise.resolve();
@@ -3783,6 +3821,10 @@ var SkeletonAnnotations = {};
             CATMAID.statusBar.replaceLast("Created treenode #" + atn.id + " close to active connector");
             create = this.createTreenodeWithLink(atn.id, phys_x, phys_y, phys_z, -1, 5,
                 "close_to", postCreateFn);
+          } else if (CATMAID.Connectors.SUBTYPE_MITOCHONDRION_CONNECTOR === atn.subtype) {
+            CATMAID.statusBar.replaceLast("Created treenode #" + atn.id + " with link to active mitochondrion connector");
+            create = this.createMitochondrionTreenode(atn.id, phys_x, phys_y, phys_z, -1, 5,
+                postCreateFn);
           } else {
             CATMAID.warn("Couldn't find matching link type for connector with type " +
                 atn.subtype);
@@ -5576,6 +5618,8 @@ var SkeletonAnnotations = {};
           prefix = "Attachment connector node #" + node.id;
         } else if (CATMAID.Connectors.SUBTYPE_SYNAPTIC_CONNECTOR === node.subtype) {
           prefix = "Synaptic connector node #" + node.id;
+        } else if (CATMAID.Connectors.SUBTYPE_MITOCHONDRION_CONNECTOR === node.subtype) {
+          prefix = "Mitochondrion connector node #" + node.id;
         } else {
           prefix = "Unknown connector node #" + node.id;
         }

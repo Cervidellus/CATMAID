@@ -392,8 +392,10 @@ def compact_skeleton(request:HttpRequest, project_id=None, skeleton_id=None,
 @api_view(['POST'])
 @requires_user_role(UserRole.Browse)
 def compact_skeleton_detail_many(request:HttpRequest, project_id=None) -> Union[HttpResponse, JsonResponse]:
-    """Get a compact treenode representation of a list of skeletons, optionally
-    with the history of individual nodes and connectors.
+    """Get a compact treenode representation of a list of skeletons
+
+    The returned data can optionally with the history of individual nodes and
+    connectors.
 
     Returns, in JSON, [[nodes], [connectors], {nodeID: [tags]}], with
     connectors and tags being empty when 0 == with_connectors and 0 ==
@@ -522,9 +524,11 @@ def _compact_skeleton(project_id, skeleton_id, with_connectors=True,
         with_tags=True, with_history=False, with_merge_history=True,
         with_reviews=False, with_annotations=False, with_user_info=False,
         ordered=False, scale=None) -> Tuple[Tuple, Tuple, DefaultDict[Any, List], List, List]:
-    """Get a compact treenode representation of a skeleton, optionally with the
-    history of individual nodes and connector, reviews and annotationss. Note
-    this function is performance critical! Returns, in JSON:
+    """Get a compact treenode representation of a skeleton
+
+    The returned data can optionally with the history of individual nodes and
+    connector, reviews and annotationss. Note this function is performance
+    critical! Returns, in JSON:
 
       [[nodes], [connectors], {nodeID: [tags]}, [reviews], [annotations]]
 

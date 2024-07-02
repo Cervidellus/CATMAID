@@ -46,7 +46,7 @@ apidoc:
 	@echo "Requires local CATMAID server on port 8000"
 	coreapi get http://localhost:8000/apis/v2/swagger.json --format openapi && \
 	coreapi dump --format openapi > source/_static/api/openapi.json && \
-	`npm bin`/redoc-cli bundle source/_static/api/openapi.json -o source/_static/api/index.html
+	`npm prefix`/node_modules/.bin/redoc-cli bundle source/_static/api/openapi.json -o source/_static/api/index.html
 
 widgetdoc:
 	@echo

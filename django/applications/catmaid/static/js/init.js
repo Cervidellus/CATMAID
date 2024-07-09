@@ -577,6 +577,12 @@ var project;
     document.getElementById( "account" ).onkeydown = login_oninputreturn;
     document.getElementById( "password" ).onkeydown = login_oninputreturn;
 
+    document.getElementById( "home_button" ).addEventListener('click', event => {
+      CATMAID.client.confirmLoadHomeView()
+        .catch(CATMAID.handleError);
+      return false;
+    });
+
     CATMAID.DataViews.list().then(dataviews => {
       this._knownDataViews = dataviews;
       this._updateDataViewMenu();
@@ -1818,7 +1824,7 @@ var project;
     // If a project is active, ask for confirmation before closing it.
     if (project) {
         if (!confirm('Are you sure you want to close all widgets and views?')) {
-          return;
+          return Promise.reject(new CATMAID.Warning('Cancelled by user'));
         }
       project.destroy();
     } else {
@@ -1888,6 +1894,21 @@ var project;
   };
 
   /**
+   * Ask the user whether to close an active project, before loading the home
+   * view.
+   */
+  Client.prototype.confirmLoadHomeView = function(backgroundDataView = false) {
+    // If a project is active, ask for confirmation before closing it.
+    if (project) {
+      if (!confirm('Are you sure you want to close the active project including all windows?')) {
+        return Promise.reject(new CATMAID.Warning('Cancelled by user'));
+      }
+      project.destroy();
+    }
+    return CATMAID.client.loadHomeView(backgroundDataView);
+  };
+
+  /**
    * Load a particular data view.
    *
    * @param background {boolean} Optional, if the data view should only be loaded,
@@ -1925,7 +1946,7 @@ var project;
    */
   Client.prototype.load_default_dataview = function(background) {
     var self = this;
-    CATMAID.DataViews.getDefaultConfig()
+    return CATMAID.DataViews.getDefaultConfig()
       .then(function(config) {
         // If no data view is defined on the back-end, use a default data view.
         if (!config || !config.id || CATMAID.tools.isEmpty(config.config)) {

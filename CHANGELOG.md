@@ -173,6 +173,9 @@ Miscellaneous:
 - The navigate-with-project setting of a stack viewer is now respected in
   stored layouts.
 
+- Clicking the Home link in the upper left corner with a project open, will now
+  also ask for confirmation (like clicking any data view entry in the menu).
+
 ## Maintenance updates
 
 - Node distance measurements: computation of straight line distance has been

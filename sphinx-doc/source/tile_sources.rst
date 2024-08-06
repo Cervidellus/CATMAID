@@ -368,6 +368,14 @@ Tile source types are listed by the enumeration integer ID referenced by
 
   Currently, only HTTPS mode is supported (i.e. no explicit credentials).
 
+  If the dataset is stored in Neuroglancer Precomputed format, this tile source
+  checks for special entries in the stack's ``metadata`` field: ``ngepreInfo``
+  and ``ngepreProvenance``. Both fields act as a cache for the real dataset data
+  and can speed up tile rendering significantly. The first field is simply the
+  datasets info file. The second one is the datasets ``provenance`` file, and
+  can be set to ``{"owners": [], "sources": [], "processing": [], "description":
+  ""}`` if the file is not available.
+
 14. Neuroglancer precomputed image blocks
 *****************************************
 

@@ -11,7 +11,7 @@ import math
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 
-from catmaid.models import UserRole, TileSourceTypes
+from catmaid.models import UserRole, TileSourceTypes, Stack
 from catmaid.control.common import ConfigurationError, get_request_bool
 from catmaid.control.authentication import requires_user_role
 
@@ -119,14 +119,31 @@ def get_cloudvolume_tile(project_id, stack_id, scale, height, width, x, y, z,
     scale_to_fit = False
     effective_scale = 1.0
     voxel_offset = (0, 0, 0)
+
+    # Use a cached info file, if availavle. This avoids fetching the info file
+    # for every tile.
+    stack = Stack.objects.get(id=stack_id)
+    infoKey = 'ngpreInfo'
+    if stack.metadata and infoKey in stack.metadata:
+        info = stack.metadata.get(infoKey)
+    else:
+        info = None
+    provenanceKey = 'ngpreProvenance'
+    if stack.metadata and provenanceKey in stack.metadata:
+        provenance = stack.metadata.get(provenanceKey)
+    else:
+        provenance = None
+
     try:
         cv = cloudvolume.CloudVolume(basename, use_https=True, parallel=False,
-                cache=cache, mip=mip, bounded=False, fill_missing=fill_missing)
+                cache=cache, mip=mip, bounded=False, fill_missing=fill_missing,
+                info=info, provenance=provenance)
         cutout = cv[x:(x + width), y:(y + height), z]
     except cloudvolume.exceptions.ScaleUnavailableError as e:
         logger.info(f'Need to use extra scaling, because mip level {mip} is not available: {e}')
         cv_test = cloudvolume.CloudVolume(basename, use_https=True, parallel=False,
-                cache=cache, bounded=False, fill_missing=fill_missing)
+                cache=cache, bounded=False, fill_missing=fill_missing,
+                                          info=info, provenance=provenance)
         # Find mip closest to the request
         min_mip = None
         min_mip_dist = float('infinity')

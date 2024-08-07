@@ -263,11 +263,32 @@
       // not it has loaded. Do this before loading tiles in case they load
       // immediately, so that the buffer will be cleared.
       window.clearTimeout(this._swapBuffersTimeout);
-      this._swapBuffersTimeout = window.setTimeout(this._swapBuffers.bind(this, true), 3000);
+      const swapBufferTimeoutHandler = () => {
+        const nToLoad = this._swapBuffers(true);
+        if (nToLoad > 0) {
+          // Unless canceled, try to redrawing every 0.5 sec for five seconds.
+          window.clearInterval(this._renderInterval);
+          this._renderIntervalRunningTime = 0;
+          this._renderInterval = window.setInterval(() => {
+            this._renderIntervalRunningTime += 500;
+            this._renderIfReady();
+            if (this._renderIntervalRunningTime > 5000) {
+              window.clearInterval(this._renderInterval);
+              this._renderIntervalRunningTime = 0;
+            }
+          }, 500);
+        }
+      };
+      this._swapBuffersTimeout = window.setTimeout(swapBufferTimeoutHandler, 3000);
+      this._renderInterval = null;
+      this._renderIntervalRunningTime = 0;
       var newRequest = CATMAID.PixiContext.GlobalTextureManager.load(
           toLoad,
           this.tileSource.getRequestHeaders(),
-          this._swapBuffers.bind(this, false, this._swapBuffersTimeout));
+          () => {
+            this._swapBuffers(false, this._swapBuffersTimeout);
+            window.clearInterval(this._renderInterval);
+          });
       CATMAID.PixiContext.GlobalTextureManager.cancel(this._tileRequest);
       this._tileRequest = newRequest;
       loading = true;
@@ -299,6 +320,7 @@
     window.clearTimeout(this._swapBuffersTimeout);
     this._swapBuffersTimeout = null;
 
+    let nInvalid = 0;
     for (var i = 0; i < this._tiles.length; ++i) {
       for (var j = 0; j < this._tiles[0].length; ++j) {
         var source = this._tilesBuffer[i][j];
@@ -315,6 +337,9 @@
               this._setTextureInterpolationMode(tile.texture, this._pixiInterpolationMode);
             }
             tile.visible = true;
+            if (!texture || !texture.valid) {
+              ++nInvalid;
+            }
           }
         }
       }
@@ -331,6 +356,8 @@
       this._completionCallback = null;
       completionCallback();
     }
+
+    return nInvalid;
   };
 
   /** @inheritdoc */

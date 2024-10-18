@@ -144,6 +144,17 @@
   };
 
   /**
+   * Remove a transformation from this layer.
+   */
+  LandmarkLayer.prototype.removeLandmarkTransform = function(transformation) {
+    let txIndex = this.displayTransformations.indexOf(transformation);
+    if (txIndex < -1) {
+      return;
+    }
+    this.displayTransformations.splice(txIndex, 1);
+  };
+
+  /**
    * Adjust rendering to current field of view.
    */
   LandmarkLayer.prototype.redraw = function(completionCallback) {
@@ -152,113 +163,111 @@
     var projectViewBox = this.stackViewer.primaryStack.createStackToProjectBox(stackViewBox);
 
     // If there are nodes available, find the ones on the current section
-    if (this._currentZIndex.size > 0) {
-      let zIndex = this._currentZIndex;
-      let currentZ = this.stackViewer.z;
-      let primaryStack = this.stackViewer.primaryStack;
-      // Render intersection of each available skeleton with the current
-      // section.
-      let nodesOnSection = zIndex.get(this.stackViewer.z);
+    let zIndex = this._currentZIndex;
+    let currentZ = this.stackViewer.z;
+    let primaryStack = this.stackViewer.primaryStack;
+    // Render intersection of each available skeleton with the current
+    // section.
+    let nodesOnSection = zIndex.get(this.stackViewer.z);
 
-      if (nodesOnSection && nodesOnSection.size > 0) {
-        this.nodes = new Map();
-        // Prepare existing Node and ConnectorNode instances for reuse
-        this.graphics.resetCache();
-        var addedNodes = [];
+    if (nodesOnSection && nodesOnSection.size > 0) {
+      this.nodes = new Map();
+      // Prepare existing Node and ConnectorNode instances for reuse
+      this.graphics.resetCache();
+      var addedNodes = [];
 
-        // Add regular nodes
-        for (let a of nodesOnSection) {
-          // Add all nodes along with their parents and children
-          // [id, parent_id, user_id, location_x, location_y, location_z, radius, confidence].
-          var stackZ = primaryStack.projectToUnclampedStackZ(a[5], a[4], a[3]);
-          let newNode = this.graphics.newNode(a[0], null, a[1], a[6],
-              a[3], a[4], a[5], stackZ - currentZ, a[7], a[8],
-              0, a[2]);
-          this.nodes.set(a[0], newNode);
-          addedNodes.push(newNode);
+      // Add regular nodes
+      for (let a of nodesOnSection) {
+        // Add all nodes along with their parents and children
+        // [id, parent_id, user_id, location_x, location_y, location_z, radius, confidence].
+        var stackZ = primaryStack.projectToUnclampedStackZ(a[5], a[4], a[3]);
+        let newNode = this.graphics.newNode(a[0], null, a[1], a[6],
+            a[3], a[4], a[5], stackZ - currentZ, a[7], a[8],
+            0, a[2]);
+        this.nodes.set(a[0], newNode);
+        addedNodes.push(newNode);
+      }
+
+      // Add virtual nodes and link parent with children
+      for (let b of nodesOnSection) {
+        var n = this.nodes.get(b[0]);
+        var pn = this.nodes.get(b[1]); // parent Node
+
+        // Neither virtual nodes or other parent/child links need to be created if
+        // there is no parent node.
+        if (!pn) {
+          continue;
         }
 
-        // Add virtual nodes and link parent with children
-        for (let b of nodesOnSection) {
-          var n = this.nodes.get(b[0]);
-          var pn = this.nodes.get(b[1]); // parent Node
-
-          // Neither virtual nodes or other parent/child links need to be created if
-          // there is no parent node.
-          if (!pn) {
+        // Virtual nodes can only exists if both parent and child are not on the
+        // current section and not both above or below.
+        if ((n.zdiff < 0 && pn.zdiff > 0) || (n.zdiff > 0 && pn.zdiff < 0)) {
+          var vn = CATMAID.createVirtualNode(this.graphics, n, pn, this.stackViewer);
+          if (vn) {
+            n.parent = vn;
+            n.parent_id = vn.id;
+            pn.addChildNode(vn);
+            vn.addChildNode(n);
+            this.nodes.set(vn.id, vn);
+            addedNodes.push(vn);
             continue;
           }
-
-          // Virtual nodes can only exists if both parent and child are not on the
-          // current section and not both above or below.
-          if ((n.zdiff < 0 && pn.zdiff > 0) || (n.zdiff > 0 && pn.zdiff < 0)) {
-            var vn = CATMAID.createVirtualNode(this.graphics, n, pn, this.stackViewer);
-            if (vn) {
-              n.parent = vn;
-              n.parent_id = vn.id;
-              pn.addChildNode(vn);
-              vn.addChildNode(n);
-              this.nodes.set(vn.id, vn);
-              addedNodes.push(vn);
-              continue;
-            }
-          }
-
-          // If no virtual node was inserted, link parent and child normally.
-          n.parent = pn;
-          // update the parent's children
-          pn.addChildNode(n);
         }
 
-        // Disable most unused node instances, keeping a small caching buffer.
-        this.graphics.disableBeyond(addedNodes.length, 0);
-
-        this.initColors();
-
-        // Draw node edges and circles, including the ones for virtual nodes.
-        for (var i=0, imax=addedNodes.length; i<imax; ++i) {
-          addedNodes[i].createGraphics();
-        }
-
-        // Update colors
-        for (let node of this.nodes.values()) {
-          node.updateColors();
-        }
-      } else {
-        for (let node of this.nodes.values()) {
-          node.disable();
-        }
-        this.nodes = new Map();
+        // If no virtual node was inserted, link parent and child normally.
+        n.parent = pn;
+        // update the parent's children
+        pn.addChildNode(n);
       }
 
-      var screenScale = CATMAID.TracingOverlay.Settings.session.screen_scaling;
-      // All graphics elements scale automatcally.
-      // If in screen scale mode, where the size of all elements should
-      // stay the same (regardless of zoom level), counter acting this is required.
-      var dynamicScale = screenScale ? (1 / this.stackViewer.scale) : false;
+      // Disable most unused node instances, keeping a small caching buffer.
+      this.graphics.disableBeyond(addedNodes.length, 0);
 
-      let userScaleFactor = this.options.scale;
-      this.graphics.scale(
-          CATMAID.TracingOverlay.Settings.session.scale * userScaleFactor,
-          this.stackViewer.primaryStack.minPlanarRes,
-          dynamicScale);
+      this.initColors();
 
-      // In case of a zoom level change and screen scaling is selected, update
-      // edge width.
-      if (this.displayTransformations.length > 0 && (userScaleFactor * this.stackViewer.s) !== this.lastScale) {
-        // Remember current zoom level
-        this.lastScale = userScaleFactor * this.stackViewer.s;
-        // Update edge width
-        var edgeWidth = this.graphics.Node.prototype.EDGE_WIDTH || 2;
-        this.graphics.containers.lines.children.forEach(function (line) {
-          line.graphicsData[0].lineWidth = edgeWidth;
-          line.dirty++;
-          line.clearDirty++;
-        });
-        this.graphics.containers.nodes.children.forEach(function (c) {
-          c.scale.set(this.graphics.Node.prototype.stackScaling);
-        }, this);
+      // Draw node edges and circles, including the ones for virtual nodes.
+      for (var i=0, imax=addedNodes.length; i<imax; ++i) {
+        addedNodes[i].createGraphics();
       }
+
+      // Update colors
+      for (let node of this.nodes.values()) {
+        node.updateColors();
+      }
+    } else {
+      for (let node of this.nodes.values()) {
+        node.disable();
+      }
+      this.nodes = new Map();
+    }
+
+    var screenScale = CATMAID.TracingOverlay.Settings.session.screen_scaling;
+    // All graphics elements scale automatcally.
+    // If in screen scale mode, where the size of all elements should
+    // stay the same (regardless of zoom level), counter acting this is required.
+    var dynamicScale = screenScale ? (1 / this.stackViewer.scale) : false;
+
+    let userScaleFactor = this.options.scale;
+    this.graphics.scale(
+        CATMAID.TracingOverlay.Settings.session.scale * userScaleFactor,
+        this.stackViewer.primaryStack.minPlanarRes,
+        dynamicScale);
+
+    // In case of a zoom level change and screen scaling is selected, update
+    // edge width.
+    if (this.displayTransformations.length > 0 && (userScaleFactor * this.stackViewer.s) !== this.lastScale) {
+      // Remember current zoom level
+      this.lastScale = userScaleFactor * this.stackViewer.s;
+      // Update edge width
+      var edgeWidth = this.graphics.Node.prototype.EDGE_WIDTH || 2;
+      this.graphics.containers.lines.children.forEach(function (line) {
+        line.graphicsData[0].lineWidth = edgeWidth;
+        line.dirty++;
+        line.clearDirty++;
+      });
+      this.graphics.containers.nodes.children.forEach(function (c) {
+        c.scale.set(this.graphics.Node.prototype.stackScaling);
+      }, this);
     }
 
     var planeDims = this.stackViewer.primaryStack.getPlaneDimensions();
@@ -354,100 +363,105 @@
 
     let self = this;
     let availableSkeletonData = new Map();
-    Promise.all(dataRetrievalJobs)
-      .then(function(results) {
-        self._loading = false;
+    if (dataRetrievalJobs.length == 0) {
+      self._currentZIndex.clear();
+      self.redraw();
+    } else {
+      Promise.all(dataRetrievalJobs)
+        .then(function(results) {
+          self._loading = false;
 
-        // Build stack Z based index
-        let zIndex = self._currentZIndex;
-        let stack = self.stackViewer.primaryStack;
-        zIndex.clear();
+          // Build stack Z based index
+          let zIndex = self._currentZIndex;
+          let stack = self.stackViewer.primaryStack;
+          zIndex.clear();
 
-        for (let i=0; i<self.displayTransformations.length; ++i) {
-          let transform = self.displayTransformations[i];
-          let skeletonIds = transform.skeletons.map(m => m.id);
+          for (let i=0; i<self.displayTransformations.length; ++i) {
+            let transform = self.displayTransformations[i];
+            let skeletonIds = transform.skeletons.map(m => m.id);
 
-          for (let j=0; j<skeletonIds.length; ++j) {
-            let skeletonId = skeletonIds[j];
-            let skeletonData = transform.skeletonCache ? transform.skeletonCache[skeletonId] : null;
-            if (!skeletonData) {
-              CATMAID.warn("Couldn't find data for skeleton " + skeletonId);
-              continue;
-            }
-
-            let ap = new CATMAID.ArborParser().init('compact-skeleton', skeletonData);
-            let stackZMap = new Map();
-            let nodeMap = new Map();
-            let successors = ap.arbor.allSuccessors();
-            availableSkeletonData.set(skeletonId, {
-              arborParser: ap,
-              nodes: nodeMap,
-              successorMap: successors,
-              stackZMap: stackZMap
-            });
-
-            // Get stack Z of each node
-            let nodes = skeletonData[0];
-            for (let k=0, kmax=nodes.length; k<kmax; ++k) {
-              // We need the skeleton ID for rendering
-              let node = nodes[k].concat(parseInt(skeletonId, 10));
-              let nodeX = node[3],
-                  nodeY = node[4],
-                  nodeZ = node[5];
-              let nodeStackZ = stack.projectToUnclampedStackZ(nodeZ, nodeY, nodeX);
-              stackZMap.set(node[0], nodeStackZ);
-              nodeMap.set(node[0], node);
-            }
-
-            // Put it in Z index.
-            for (let k=0, kmax=nodes.length; k<kmax; ++k) {
-              let node = nodeMap.get(nodes[k][0]);
-              let nodeStackZ = stackZMap.get(node[0]);
-
-              if (!(node && nodeStackZ !== undefined)) {
-                throw new CATMAID.ValueError("Could not find node or its stack space Z coordinate");
+            for (let j=0; j<skeletonIds.length; ++j) {
+              let skeletonId = skeletonIds[j];
+              let skeletonData = transform.skeletonCache ? transform.skeletonCache[skeletonId] : null;
+              if (!skeletonData) {
+                CATMAID.warn("Couldn't find data for skeleton " + skeletonId);
+                continue;
               }
 
-              // Add node to Z index
-              let zBucket = zIndex.get(nodeStackZ);
-              if (!zBucket) {
-                zBucket = new Set();
-                zIndex.set(nodeStackZ, zBucket);
-              }
-              zBucket.add(node);
+              let ap = new CATMAID.ArborParser().init('compact-skeleton', skeletonData);
+              let stackZMap = new Map();
+              let nodeMap = new Map();
+              let successors = ap.arbor.allSuccessors();
+              availableSkeletonData.set(skeletonId, {
+                arborParser: ap,
+                nodes: nodeMap,
+                successorMap: successors,
+                stackZMap: stackZMap
+              });
 
-              // Add all children
-              let children = successors[node[0]];
-              for (let c=0; c<children.length; ++c) {
-                zBucket.add(nodeMap.get(parseInt(children[c], 10)));
+              // Get stack Z of each node
+              let nodes = skeletonData[0];
+              for (let k=0, kmax=nodes.length; k<kmax; ++k) {
+                // We need the skeleton ID for rendering
+                let node = nodes[k].concat(parseInt(skeletonId, 10));
+                let nodeX = node[3],
+                    nodeY = node[4],
+                    nodeZ = node[5];
+                let nodeStackZ = stack.projectToUnclampedStackZ(nodeZ, nodeY, nodeX);
+                stackZMap.set(node[0], nodeStackZ);
+                nodeMap.set(node[0], node);
               }
 
-              // Add parent node, if this is no root
-              let parentId = node[1];
-              if (parentId) {
-                let parentNode = nodeMap.get(parentId);
-                zBucket.add(parentNode);
-                // Add parent and this node also to every section between them.
-                let parentStackZ = stackZMap.get(parentId);
-                let zDiff = nodeStackZ - parentStackZ;
-                let zStep = zDiff > 0 ? -1 : 1;
-                for (let z=nodeStackZ; z !== parentStackZ; z += zStep) {
-                  let isectZBucket = zIndex.get(z);
-                  if (!isectZBucket) {
-                    isectZBucket = new Set();
-                    zIndex.set(z, isectZBucket);
+              // Put it in Z index.
+              for (let k=0, kmax=nodes.length; k<kmax; ++k) {
+                let node = nodeMap.get(nodes[k][0]);
+                let nodeStackZ = stackZMap.get(node[0]);
+
+                if (!(node && nodeStackZ !== undefined)) {
+                  throw new CATMAID.ValueError("Could not find node or its stack space Z coordinate");
+                }
+
+                // Add node to Z index
+                let zBucket = zIndex.get(nodeStackZ);
+                if (!zBucket) {
+                  zBucket = new Set();
+                  zIndex.set(nodeStackZ, zBucket);
+                }
+                zBucket.add(node);
+
+                // Add all children
+                let children = successors[node[0]];
+                for (let c=0; c<children.length; ++c) {
+                  zBucket.add(nodeMap.get(parseInt(children[c], 10)));
+                }
+
+                // Add parent node, if this is no root
+                let parentId = node[1];
+                if (parentId) {
+                  let parentNode = nodeMap.get(parentId);
+                  zBucket.add(parentNode);
+                  // Add parent and this node also to every section between them.
+                  let parentStackZ = stackZMap.get(parentId);
+                  let zDiff = nodeStackZ - parentStackZ;
+                  let zStep = zDiff > 0 ? -1 : 1;
+                  for (let z=nodeStackZ; z !== parentStackZ; z += zStep) {
+                    let isectZBucket = zIndex.get(z);
+                    if (!isectZBucket) {
+                      isectZBucket = new Set();
+                      zIndex.set(z, isectZBucket);
+                    }
+                    isectZBucket.add(node);
+                    isectZBucket.add(parentNode);
                   }
-                  isectZBucket.add(node);
-                  isectZBucket.add(parentNode);
                 }
               }
             }
           }
-        }
 
-        self.redraw();
-      })
-      .catch(CATMAID.handleError);
+          self.redraw();
+        })
+        .catch(CATMAID.handleError);
+    }
   };
 
   LandmarkLayer.prototype.unregister = function() {

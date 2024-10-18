@@ -807,6 +807,7 @@
         for (let t of layerTransformations) {
           if (!transformations.has(t)) {
             layerTransformations.delete(t);
+            layer.removeLandmarkTransform(t);
             ++nRemoved;
           }
         }
